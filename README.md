@@ -15,9 +15,10 @@ I'm Affan, and I aspire to become a data analyst in the future. Currently, I'm a
 
 Some of the projects I've done.
 
-- [Weather Prediction App](https://google.com): A simple project done to project data about the weather from European weather data using linear regression.
-- [Restaurant Database System](https://google.com): A group project aimed at creating a database system for a restaurant's day-to-day operation.
-- [TikTok Shop Replica](https://google.com): A group project aimed to create a web version of TikTok Shop with basic features of product listing and ordering the chosen products.
+- [Weather Prediction App](https://github.com/affannajiy/AI-Weather_Prediction_App): A simple project done to project data about the weather from European weather data using linear regression. One of my first projects executed using Jupyter Notebook.
+- [Restaurant Database System](https://github.com/affannajiy/DIM-academic/tree/main/DIM%20Assignment): A group project aimed at creating a database system for a restaurant's day-to-day operation. I was responsible for the ERD design and database development (A LOT OF EXPLOSION TABLES).
+- [TikTok Shop Replica](https://github.com/affannajiy/SWE_Proj): A group project aimed to create a web version of TikTok Shop with basic features of product listing and ordering the chosen products.
+- [HR Management System](https://github.com/affannajiy/CS_OOP-Algebro): A group project created to manage a HR's employee management system. I loved the project's integration using Firestore Database by Firestore which I helped developed using the NO-SQL based on what I learned in class.
 
 ## 🛠 Skillz
 
