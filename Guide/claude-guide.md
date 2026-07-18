@@ -10,13 +10,16 @@
 Go to Settings → set your preferences so Claude always has context about you without repeating yourself every session.
 
 ### 2. Use Models Accordingly
+Current lineup (2026): the **Claude 5 family**, **Opus 4.8**, and **Haiku 4.5**.
+
 | Model | Best For |
 |---|---|
-| **Haiku** | Simple tasks, quick lookups, short generations |
-| **Sonnet** | Balanced work, everyday coding, writing |
-| **Opus** | Complex reasoning, deep analysis, hard problems |
+| **Haiku 4.5** | Simple tasks, quick lookups, short generations |
+| **Sonnet 5** | Balanced work, everyday coding, writing |
+| **Opus 4.8** | Complex reasoning, deep analysis, hard problems |
+| **Fable 5** | Creative / stylistic writing |
 
-Don't burn Opus on stuff Haiku can handle.
+Don't burn Opus on stuff Haiku can handle. In Claude Code, **`/fast`** runs Opus with faster output (doesn't downgrade the model) on Opus 4.8/4.7.
 
 ### 3. Separate Sessions Throughout the Day
 Keep sessions time-boxed to avoid context bloat and stay focused:
@@ -137,6 +140,24 @@ Shows current session status info.
 
 ---
 
+### 8. Skills (Slash Commands)
+Skills are prepackaged workflows you trigger with `/<name>`. Handy ones:
+
+| Skill | What it does |
+|---|---|
+| `/grill-me` | Interviews you relentlessly about a plan/design to stress-test it before you build |
+| `/code-review` | Reviews the current diff for bugs and cleanups (add `ultra` for a deep cloud review) |
+| `/init` | Generates the `CLAUDE.md` project file |
+
+Type `/` to see what's available in your session.
+
+---
+
+### 9. Claude Code Can Browse the Web
+Claude Code can fetch and read public URLs directly — no copy-paste needed. Handy for pulling a repo's README, scraping your own GitHub profile, or checking docs mid-task. Just give it the link.
+
+---
+
 ## Quick Reference Card
 
 | Action | Command |
@@ -149,7 +170,10 @@ Shows current session status info.
 | Handoff summary | `summarise session for handoff` |
 | Clear session | `/clear` |
 | Statusline | `/statusline` |
+| Stress-test a plan | `/grill-me` |
+| Review the diff | `/code-review` |
+| Faster Opus output | `/fast` |
 
 ---
 
-*Last updated: April 2026*
+*Last updated: July 2026*
