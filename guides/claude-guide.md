@@ -10,16 +10,16 @@
 Go to Settings → set your preferences so Claude always has context about you without repeating yourself every session.
 
 ### 2. Use Models Accordingly
-Current lineup (2026): the **Claude 5 family**, **Opus 4.8**, and **Haiku 4.5**.
+Current lineup (2026): the **Claude 5 family** (Opus 5, Sonnet 5, Fable 5) plus **Haiku 4.5**.
 
-| Model | Best For |
-|---|---|
-| **Haiku 4.5** | Simple tasks, quick lookups, short generations |
-| **Sonnet 5** | Balanced work, everyday coding, writing |
-| **Opus 4.8** | Complex reasoning, deep analysis, hard problems |
-| **Fable 5** | Creative / stylistic writing |
+| Model | Model ID | Best For |
+|---|---|---|
+| **Haiku 4.5** | `claude-haiku-4-5-20251001` | Simple tasks, quick lookups, short generations |
+| **Sonnet 5** | `claude-sonnet-5` | Balanced work, everyday coding, writing |
+| **Opus 5** | `claude-opus-5` | Complex reasoning, deep analysis, hard problems |
+| **Fable 5** | `claude-fable-5` | Creative / stylistic writing |
 
-Don't burn Opus on stuff Haiku can handle. In Claude Code, **`/fast`** runs Opus with faster output (doesn't downgrade the model) on Opus 4.8/4.7.
+Don't burn Opus on stuff Haiku can handle. In Claude Code, **`/fast`** runs Opus with faster output (doesn't downgrade the model) on Opus 5/4.8.
 
 ### 3. Separate Sessions Throughout the Day
 Keep sessions time-boxed to avoid context bloat and stay focused:

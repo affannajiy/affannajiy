@@ -9,23 +9,26 @@ I'm Affan, a computer science student who likes building tools and figuring out 
 - 🌱 Currently exploring: Computer networking, and building side projects.
 - 🎓 Studying at Universiti Teknologi PETRONAS (UTP).
 - 💡 Interested in networking, systems, tooling, and databases.
+- 🌐 Portfolio: [affannajiy.github.io](https://affannajiy.github.io/)
 - 📧 Reach me: najiyaffan@gmail.com
 
 ## ⭐ Featured Projects
 
-| Project | Description |
-| --- | --- |
-| [OpenFOAM](https://github.com/affannajiy/OpenFOAM) | A mesh-generation tooling suite that automates OpenFOAM workflows on WSL2, with a PyQt5 GUI, CLI tools, and a self-healing Windows installer. |
-| [Tyunnie PA](https://github.com/affannajiy/tyunnie-pa) | A personal planner to help manage day-to-day tasks, inspired by Taehyun from Tomorrow X Together. Built with Next.js, Supabase, Groq, and Vercel. |
-| [Daily History](https://github.com/affannajiy/daily-history) | A daily historical email newsletter that delivers a slice of history to your inbox. Built with TypeScript. |
+| Project                                                              | Description                                                                                                                                       |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Portfolio Site](https://affannajiy.github.io/) · [repo](https://github.com/affannajiy/affannajiy.github.io) | Static personal portfolio — no frameworks, no build step, CSP-hardened.                                                                           |
+| [OpenFOAM](https://github.com/affannajiy/OpenFOAM)                   | Windows GUI for generating OpenFOAM background and snappyHexMesh meshes, with CLI tools and a self-healing installer.                             |
+| [Tyunnie PA](https://github.com/affannajiy/tyunnie-pa)               | A personal planner to help manage day-to-day tasks, inspired by Taehyun from Tomorrow X Together. Built with Next.js, Supabase, Groq, and Vercel. |
+| [Daily History](https://github.com/affannajiy/daily-history)         | Daily email digest of verified historical events, grounded to real dates and sources. Built with TypeScript.                                      |
 
 ## 📂 Other Projects
 
-| Project | Description |
-| --- | --- |
-| [Weather Prediction App](https://github.com/affannajiy/AI-Weather_Prediction_App) | Predicts weather from European data using linear regression. One of my first projects, built in Jupyter Notebook. |
+| Project                                                                            | Description                                                                                                                             |
+| ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| [Weather Prediction](https://github.com/affannajiy/weather-prediction)             | Predicts weather using ML models trained on historical climate data. One of my first projects, built in Jupyter Notebook.               |
+| [Algo Viewer](https://github.com/affannajiy/algo-viewer)                           | Algorithm visualisation website.                                                                                                        |
+| [Cursor Mover](https://github.com/affannajiy/cursor-mover)                         | Keeps your PC awake with realistic mouse jitter and a live tray dashboard.                                                              |
 | [Restaurant Database System](https://github.com/affannajiy/Black-Caravan_DIM-Proj) | A group project building a database system for a restaurant's day-to-day operations. I handled the ERD design and database development. |
-| [IoT Analysis](https://github.com/affannajiy/iot_analysis) | Data analysis from an IoT group project, turning raw sensor data into insights. |
 
 ## 🛠 Skillz
 
@@ -40,8 +43,9 @@ These are some of what I have touched on before.
 
 Up to you to check it out!
 
+[![Portfolio](https://img.shields.io/badge/Portfolio-000000?style=for-the-badge&logo=githubpages&logoColor=white)](https://affannajiy.github.io/)
 [![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/affannajiy/)
 [![instagram](https://img.shields.io/badge/instagram-962fbf?style=for-the-badge&logo=instagram&logoColor=white)](https://www.instagram.com/affanhuhui/)
 [![Linktree](https://img.shields.io/badge/Linktree-254F1A?style=for-the-badge&logo=linktree&logoColor=white)](https://linktr.ee/affannajiy/)
 
-_Last updated: 18/7/2026_
+_Last updated: 19/8/2026_
