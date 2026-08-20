@@ -1,419 +1,398 @@
 # Security Rulebook
 
-A pure reference: security-design principles, reduced to *what the principle is* and a
-one-line description. No app-specific inventory, no record of what any one project already
-does about them — that belongs in that project's own posture doc (e.g. `SECURITY.md`) and
-changelog. Drop this file into any project; it costs no tokens beyond what it takes to read
-the tables.
+**Last updated:** 2026-08-20
 
-Three layers, answering different questions:
+Portable reference. One line per principle, control, or named risk. No project posture — what
+*this* system does belongs in the project's own `SECURITY.md`.
 
-| | Section | Question it answers |
+| | Section | Answers |
 | --- | --- | --- |
-| **§1** | 7 principles of secure design | *At design time* — how do you shape a system so insecurity is the harder path? |
-| **§2** | OWASP foundational security principles | *Underneath §1* — the older, broader vocabulary §1 is built from, plus terms §1 doesn't cover. |
-| **§2a** | OWASP Secure Coding Practices checklist | *At the keyboard* — the 200-odd concrete coding controls the principles cash out into. |
-| **§3** | Secure SDLC & production practices | *In the pipeline* — how the principles get enforced mechanically, before and at deploy. |
+| **§1** | Design principles | How do you shape a system so the insecure path is the harder one? |
+| **§2** | Secure coding controls | What must this code do, line by line? |
+| **§3** | OWASP Top 10:2025 | Which named web risk does this change open? |
+| **§4** | OWASP Top 10 for LLM apps | What breaks when prompts, tools, and model output cross a trust boundary? |
+| **§5** | Supply chain & secure SDLC | How does the build stop bad code and bad dependencies? |
+| **§6** | Run, detect, respond | Will you see an attack, and can you recover? |
+| **§7** | Conflicts | Which rule wins? |
+
+**Goals.** ISO/IEC 25010:2023 splits security into confidentiality, integrity, non-repudiation,
+accountability, authenticity, and resistance. Availability sits under reliability in the
+standard, but an attacker who takes the service down has still won.
 
 ---
 
-## §1 The 7 principles of secure design
+## §1 Design principles
 
-| # | Principle | What it demands |
+### §1a Saltzer and Schroeder (1975)
+
+Eight principles from *The Protection of Information in Computer Systems*. Every later
+framework traces back here. Rows 9 and 10 are the two the same paper calls partly applicable.
+
+| # | Principle | Demands |
 | --- | --- | --- |
-| 1 | **Security as code** | Security policy is version-controlled, tested, and enforced in CI/CD — not a manual checklist run once. |
-| 2 | **Secure defaults** | The out-of-the-box configuration is the most secure one the system can ship with; opting *out* of safety takes a deliberate act. |
-| 3 | **Least privilege** | Grant only the access a task needs, for only as long as it needs it. |
-| 4 | **Separation of duties** | No single actor or credential can complete a sensitive action alone — critical steps need independent approval. |
-| 5 | **Minimize attack surface area** | Every endpoint, feature, and open port is a liability. Remove what isn't used; don't build what isn't needed. |
-| 6 | **Complete mediation** | Re-check authorization on *every* request for a resource — never cache a permission decision as evergreen. |
-| 7 | **Fail securely** | On error, default to the safe state (deny, not permit) — a broken check must not become an open door. |
+| 1 | **Economy of mechanism** | Keep the security design as small and simple as it can be. Complexity is where a flaw hides. |
+| 2 | **Fail-safe defaults** | Base decisions on permission, not exclusion. The default answer is no. |
+| 3 | **Complete mediation** | Check authority on every access to every object. Never cache a decision as permanent. |
+| 4 | **Open design** | The design may be public. Only the key stays secret. Obscurity is not a control. |
+| 5 | **Separation of privilege** | Require two conditions where you can. One stolen key is then not enough. |
+| 6 | **Least privilege** | The smallest set of rights the task needs, for the shortest time. |
+| 7 | **Least common mechanism** | Share as little as possible between privilege levels. A shared path is an escalation path. |
+| 8 | **Psychological acceptability** | Make the secure path easy. A control that gets in the way gets routed around. |
+| 9 | **Work factor** | Compare the cost of breaking a control against the attacker you expect. |
+| 10 | **Compromise recording** | A reliable record of a break-in can replace expensive prevention. Sometimes detection is the better buy. |
 
----
+### §1b Modern additions
 
-## §2 OWASP foundational security principles
-
-The wider vocabulary §1 draws from. Where a term restates §1, it's marked **†** and kept
-short — §1 has the fuller treatment.
-
-| # | Principle | What it means |
+| # | Principle | Demands |
 | --- | --- | --- |
-| 1 | **Security by Design** | Security requirements are gathered and designed for up front, not patched on after the fact. |
-| 2 | **Security by Default†** | Same as §1.2 — the default configuration is the safest one. |
-| 3 | **No Security Guarantee** | No system is 100% secure. The goal is to raise attacker cost and lower reward, not reach an unreachable "done". |
-| 4 | **Defense in Depth** | Layer independent controls so one failure doesn't equal total compromise — each layer is a fallback for the last. |
-| 5 | **Fail Safe†** | Same as §1.7 — an error state defaults to denying access, not granting it. |
-| 6 | **Least Privilege†** | Same as §1.3. |
-| 7 | **Compartmentalize** | Split access on a need-to-know basis rather than all-or-nothing — but not so finely the system becomes unmanageable. |
-| 8 | **Separation of Duties†** | Same as §1.4. |
-| 9 | **Economy of Mechanism** | Prefer the simplest correct implementation — complexity is where vulnerabilities hide and reviews fail. |
-| 10 | **Complete Mediation†** | Same as §1.6. |
-| 11 | **Open Design** | Security must not depend on the design being secret — only on keys/credentials staying secret. Security through obscurity is not a control. |
-| 12 | **Least Common Mechanism** | Don't share a resource or code path across users/processes at different privilege levels — shared mechanisms are escalation paths. |
-| 13 | **Psychological Acceptability** | A control that's too much friction gets worked around. Security must be usable enough that people don't defeat it to get their job done. |
-| 14 | **Usability and Manageability** | Configuration and administration of a control should be simple and standard — obscure setup is itself a source of misconfiguration. |
-| 15 | **Secure the Weakest Link** | System resilience is bounded by its weakest component. Find it and fix it first — it's where an attacker will start too. |
-| 16 | **Leveraging Existing Components** | Reuse vetted, patched, widely-reviewed components over rolling your own — "many eyes" and existing patches beat a novel implementation. |
+| 1 | **Security by design** | Gather security requirements with the others. A control added after release costs more and covers less. |
+| 2 | **Secure by default** | The shipped configuration is the safest one. Opting out takes a deliberate act. |
+| 3 | **Security as code** | Policy in version control, tested, enforced in the pipeline. A manual checklist rots. |
+| 4 | **Defense in depth** | Layer independent controls. One failure must not equal full compromise. |
+| 5 | **Minimize the attack surface** | Every endpoint, port, and permission is a liability. Remove what nobody uses. |
+| 6 | **Assume breach** | Design for the day the attacker is already inside. Segment, scope credentials, watch internal traffic. |
+| 7 | **Verify explicitly** | Authenticate and authorize every request on its own evidence. Network location proves nothing. |
+| 8 | **Compartmentalize** | Split access on need-to-know, but not so finely that nobody can run the system. |
+| 9 | **Secure the weakest link** | Find the weakest part first, because the attacker will. |
+| 10 | **Reuse vetted components** | Prefer a maintained, widely reviewed library over your own, above all for cryptography. |
+| 11 | **No security guarantee** | No system is fully secure. Raise the attacker's cost and cut the reward. |
+| 12 | **Own the outcome** | The producer carries the security burden, not the customer. Publish what you fix, and let leadership own the result. |
+
+Row 12 restates CISA's three secure-by-design principles: own customer security outcomes,
+embrace radical transparency and accountability, lead from the top.
 
 ---
 
-## §2a OWASP Secure Coding Practices checklist
+## §2 Secure coding controls
 
-Technology-agnostic coding controls. Source: *OWASP Secure Coding Practices Quick
-Reference Guide*, v2.0, November 2010, © The OWASP Foundation, released under
-[CC BY-SA 3.0](http://creativecommons.org/licenses/by-sa/3.0/) — the wording below is
-condensed, so this section is a derivative and carries the same licence. Item numbers are the source's
-own — cite them as `SCP-n`. Two quirks kept as found: `[202]` appears twice (Memory
-Management and General Coding), and Memory/General assume an unmanaged language.
+The line-level list. **OWASP ASVS 5.0** is the full testable standard — 17 chapters, about 350
+requirements, three levels. L1 baseline, L2 for most apps holding a login or a payment, L3 for
+catastrophic-failure systems. Go to the named ASVS chapter for the complete list.
 
-**Not every row applies to every project.** A static site has no session, no DB and
-no file upload; those categories are then *not applicable*, which is a different
-claim from *satisfied*. Say which one in the project's own posture doc.
+Mark a domain **not applicable** when there is no such surface. Never mark it *passed* by default.
 
-Recurring theme across all 14: **validation, encoding, authn, authz and crypto all
-happen on a trusted system — the server. Client-side controls are UX, not security**;
-a proxy or packet tool bypasses the interface entirely, and Flash/Java/compiled
-client objects decompile.
+### §2a Input validation and injection (ASVS V1, V2)
 
-### Input Validation
-
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 1 | Validate on a trusted system (the server). |
-| 2 | Classify every data source trusted/untrusted; validate all untrusted (DBs, file streams included). |
-| 3 | One centralized validation routine. |
-| 4 | Specify a character set (e.g. UTF-8) for every input source. |
-| 5 | Canonicalize to a common character set *before* validating. |
-| 6 | Any validation failure rejects the input. |
-| 7 | If UTF-8 extended sets are supported, validate *after* decoding. |
-| 8 | Validate all client-supplied data — parameters, URLs, header and cookie names/values, and automated postbacks from JS/Flash/embedded code. |
-| 9 | Header values in requests *and* responses: ASCII only. |
-| 10 | Validate data arriving from redirects — an attacker can post straight to the redirect target and skip the pre-redirect checks. |
-| 11 | Validate expected type. |
-| 12 | Validate range. |
-| 13 | Validate length. |
-| 14 | Whitelist allowed characters wherever possible. |
-| 15 | If a hazardous character must be allowed, add output encoding, task-specific APIs, and account for every downstream use of that data. Common ones: `< > " ' % ( ) & + \ \' \"` |
-| 16 | Check discretely if the standard routine can't: null bytes (`%00`); newlines (`%0d %0a \r \n`); dot-dot-slash (`../ ..\`) including alternate encodings like `%c0%ae%c0%ae/` — canonicalize to defeat double encoding. |
+| 1 | Validate on the server. Client-side validation is for user experience, never security. |
+| 2 | Validate against an allowlist. A denylist always misses a case. |
+| 3 | Check type, length, range, and format on every field, header, cookie, and file name. |
+| 4 | Decode input once, to one canonical form, before validating. |
+| 5 | Reject invalid input. Do not repair it, because a repair can rebuild the attack. |
+| 6 | Parameterized queries for every database call. Never build a query by concatenation. |
+| 7 | Never pass user input to a shell, evaluator, template engine, or deserializer. |
+| 8 | Treat every response from another service as untrusted input. |
 
-### Output Encoding
+### §2b Output encoding (ASVS V1, V3)
 
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 17 | Encode on a trusted system. |
-| 18 | One standard, tested routine per outbound encoding type. |
-| 19 | Contextually encode all data returned to the client that came from outside the trust boundary. HTML entity encoding is one case, not all cases. |
-| 20 | Encode every character not known safe for the target interpreter. |
-| 21 | Contextually sanitize untrusted data going into SQL, XML and LDAP. |
-| 22 | Sanitize untrusted data going into OS commands. |
+| 1 | Encode for the receiving context: HTML body, HTML attribute, JavaScript, URL, CSS, SQL, or shell. |
+| 2 | Encode on output, at the moment of use. Do not store pre-encoded data. |
+| 3 | Use the framework's encoder. A hand-written escape function misses a case. |
+| 4 | Send a Content Security Policy free of `unsafe-inline` and `unsafe-eval`. |
+| 5 | Set `X-Content-Type-Options: nosniff` and a correct `Content-Type` on every response. |
 
-### Authentication and Password Management
+### §2c Authentication and passwords (ASVS V6, NIST SP 800-63B)
 
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 23 | Authenticate every page and resource except those deliberately public. |
-| 24 | Enforce authentication on a trusted system. |
-| 25 | Use standard, tested authentication services. |
-| 26 | One centralized implementation, including libraries calling external services. |
-| 27 | Keep authentication logic separate from the requested resource; redirect to and from the central control. |
-| 28 | Authentication fails securely. |
-| 29 | Admin and account-management functions at least as secure as primary auth. |
-| 30 | Store only cryptographically strong one-way *salted* hashes; the password/key store is writable only by the application. Avoid MD5. |
-| 31 | Hash on a trusted system. |
-| 32 | Validate credentials only after *all* input is collected — especially in sequential authentication. |
-| 33 | Failure responses never say which field was wrong ("Invalid username and/or password"), and must be identical in display *and* source. |
-| 34 | Authenticate connections to external systems handling sensitive data or functions. |
-| 35 | Credentials for external services: encrypted, stored on a trusted system. **Source code is not a secure location.** |
-| 36 | Transmit credentials by HTTP POST only. |
-| 37 | Send non-temporary passwords only over an encrypted connection or as encrypted data. |
-| 38 | Enforce complexity per policy or regulation, sufficient for the deployed threat environment. |
-| 39 | Enforce length per policy. Eight is common, 16 better; pass phrases better still. |
-| 40 | Obscure entry on screen (`input type="password"`). |
-| 41 | Disable the account after N invalid attempts (≈5), long enough to deter brute force but not long enough to be a DoS. |
-| 42 | Reset and change operations need the same controls as creation and authentication. |
-| 43 | Reset questions must permit sufficiently random answers ("favorite book" fails — the common answer dominates). |
-| 44 | Email-based reset goes only to a pre-registered address, carrying a temporary link/password. |
-| 45 | Temporary passwords and links expire quickly. |
-| 46 | Force a change on first use of a temporary password. |
-| 47 | Notify the user when a reset occurs. |
-| 48 | Prevent re-use. |
-| 49 | A password is unchangeable for its first day — blocks cycling around the re-use rule. |
-| 50 | Enforce changes per policy; the interval is administratively controlled. |
-| 51 | No "remember me" on password fields. |
-| 52 | Report last use, successful or not, at the next successful login. |
-| 53 | Monitor for one password tried across many accounts — the pattern that walks around per-account lockout. |
-| 54 | Change or disable every vendor default account and password. |
-| 55 | Re-authenticate before critical operations. |
-| 56 | Multi-factor for high-value or highly sensitive accounts. |
-| 57 | Third-party authentication code gets read carefully before it is trusted. |
+| 1 | At least 8 characters with another factor. At least 15 when the password is the only factor. |
+| 2 | Accept at least 64 characters, all printable ASCII, space, and Unicode. Allow paste. |
+| 3 | No composition rules. No periodic change. Force a change only on evidence of compromise. |
+| 4 | Screen new passwords against a breached and common-password list. |
+| 5 | Hash with Argon2id: 19 MiB memory, 2 iterations, 1 degree of parallelism, or stronger. |
+| 6 | Otherwise scrypt (N=2^17, r=8, p=1) or PBKDF2-HMAC-SHA-256 at 600,000 iterations. |
+| 7 | For bcrypt, work factor 10 or more. Bcrypt truncates input at 72 bytes. |
+| 8 | Salt every hash, per user, from a cryptographic random source. Consider a pepper stored separately. |
+| 9 | Offer multi-factor authentication. Require it for administrative access. |
+| 10 | Same answer for a wrong password and an unknown account. Do not leak which failed. |
+| 11 | Rate-limit and lock out on repeated failures, including reset and one-time-code entry. |
+| 12 | Reset links are single-use, short-lived, and tied to one account. Notify the owner on every credential change. |
+| 13 | Never ship a default credential. Force a change at first use if one exists. |
 
-### Session Management
+### §2d Session management (ASVS V7, V9, V10)
 
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 58 | Use the server/framework session controls; accept only their identifiers as valid. |
-| 59 | Create session identifiers on a trusted system. |
-| 60 | Well-vetted algorithms, sufficiently random identifiers. |
-| 61 | Scope authenticated-session cookies to the narrowest correct domain and path. |
-| 62 | Logout fully terminates the session or connection. |
-| 63 | Logout reachable from every authorization-protected page. |
-| 64 | Inactivity timeout as short as the business allows — hours at most. |
-| 65 | No persistent logins; terminate periodically even while active, with enough notice to the user. |
-| 66 | A session that existed before login is closed; a new one is issued after. |
-| 67 | New identifier on any re-authentication. |
-| 68 | No concurrent logins on one user ID. |
-| 69 | Never expose identifiers in URLs, errors or logs — HTTP cookie header only, never a GET parameter. |
-| 70 | Access-control server-side session data against other users of the server. |
-| 71 | Rotate the identifier periodically and deactivate the old one. |
-| 72 | New identifier when connection security changes HTTP→HTTPS. Better: be HTTPS throughout. |
-| 73 | Supplement sessions with per-session strong random tokens for sensitive server-side operations — this is the CSRF defence. |
-| 74 | For critical operations, make those tokens **per-request**, not per-session. |
-| 75 | `secure` attribute on cookies sent over TLS. |
-| 76 | `HttpOnly` unless a client script genuinely must read the value. |
+| 1 | Use the framework session manager. Do not invent a session identifier. |
+| 2 | Generate identifiers from a cryptographic random source, at least 128 bits of entropy. |
+| 3 | Set `Secure`, `HttpOnly`, and `SameSite` on every session cookie. Scope path and domain narrowly. |
+| 4 | Rotate the identifier at login and at any privilege change. |
+| 5 | Expire by absolute lifetime and idle time. Log out invalidates on the server, not only the browser. |
+| 6 | Bind a sensitive action to fresh authentication, not only to a live session. |
+| 7 | Validate signature, issuer, audience, and expiry on a self-contained token. Reject the `none` algorithm. |
+| 8 | Keep tokens out of URLs. A URL lands in logs, history, and the referrer header. |
 
-### Access Control
+### §2e Authorization (ASVS V8)
 
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 77 | Base authorization decisions only on trusted system objects (server-side session objects). |
-| 78 | One site-wide authorization component, including libraries calling external services. |
-| 79 | Access control fails securely. |
-| 80 | Deny everything if the security configuration cannot be read. |
-| 81 | Authorize *every* request — server-side scripts, includes, AJAX and rich-client calls included. |
-| 82 | Keep privileged logic separate from the rest of the code. |
-| 83 | Restrict files and resources — including those outside direct application control — to authorized users. |
-| 84 | Restrict protected URLs. |
-| 85 | Restrict protected functions. |
-| 86 | Restrict direct object references. |
-| 87 | Restrict services. |
-| 88 | Restrict application data. |
-| 89 | Restrict the user/data attributes and policy information the access controls themselves consume. |
-| 90 | Restrict security-relevant configuration. |
-| 91 | Server-side rules and their presentation-layer representation must match. |
-| 92 | Client-stored state gets encryption *and* server-side integrity checking, to catch tampering. |
-| 93 | Enforce application flow against the business rules. |
-| 94 | Cap transactions per user or device per period — above real business need, below automated-abuse rates. |
-| 95 | `Referer` is a supplemental check only; it spoofs. |
-| 96 | On long sessions, re-validate authorization periodically; on change, log the user out and force re-auth. |
-| 97 | Audit accounts and disable unused ones (e.g. 30 days past password expiry). |
-| 98 | Support disabling accounts and killing sessions when authorization ceases — role change, employment change, process change. |
-| 99 | Service and system-to-system accounts get least privilege. |
-| 100 | Write an Access Control Policy: business rules, data types, authorization criteria, and the access requirements of both data and system resources. |
+| 1 | Deny by default. A route with no rule is a closed route. |
+| 2 | Check on the server for every request, including API calls and static assets holding data. |
+| 3 | Check the object, not only the endpoint. Read access to record 1 is not access to record 2. |
+| 4 | Never trust an identifier, role, or price that arrives from the client. |
+| 5 | Keep the decision in one place, so a reviewer can read every rule in one file. |
+| 6 | Re-check on each step of a multi-step flow. A user can jump to the last step. |
+| 7 | Separate duties for high-value actions. One account must not request and approve the same payment. |
 
-### Cryptographic Practices
+### §2f Cryptography (ASVS V11, V14)
 
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 101 | Any crypto protecting secrets *from the user* runs on a trusted system. |
-| 102 | Protect master secrets from unauthorized access. |
-| 103 | Cryptographic modules fail securely. |
-| 104 | Every value meant to be unguessable — numbers, file names, GUIDs, strings — comes from the module's approved RNG. |
-| 105 | Modules compliant with FIPS 140-2 or equivalent. |
-| 106 | Have a written policy and process for key management. |
+| 1 | Use a vetted library. Never write your own algorithm or mode. |
+| 2 | Encrypt sensitive data at rest and in transit by default, not per feature. |
+| 3 | Use authenticated encryption: AES-GCM or ChaCha20-Poly1305. Encryption without integrity is not enough. |
+| 4 | Draw every key, salt, nonce, and token from a cryptographic random source. Never `rand()` or a timestamp. |
+| 5 | Never reuse a nonce or initialization vector with the same key. |
+| 6 | Store keys in a key manager or hardware module, apart from the data they protect. |
+| 7 | Rotate keys on a schedule. Keep the design able to change algorithm later. |
+| 8 | Compare secrets with a constant-time function, so timing does not leak them. |
+| 9 | Hash passwords with a password hash, per §2c. SHA-256 is the wrong tool. |
 
-### Error Handling and Logging
+### §2g Secrets (ASVS V13)
 
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 107 | No sensitive information in error responses — no system detail, session identifiers or account data. |
-| 108 | No debug output or stack traces in handlers. |
-| 109 | Generic messages, custom error pages. |
-| 110 | The application handles its own errors; don't lean on server configuration. |
-| 111 | Free allocated memory on the error path. |
-| 112 | Security-control error handling denies by default. |
-| 113 | Logging controls on a trusted system. |
-| 114 | Log both success and failure of the specified security events. |
-| 115 | Include the log event data: trusted timestamp, severity, security-event tag, account identity, source IP, outcome, description. |
-| 116 | Untrusted data in a log entry must not execute in whatever reads the log. |
-| 117 | Restrict log access to authorized individuals. |
-| 118 | One master logging routine. |
-| 119 | No sensitive data in logs — no session identifiers, no passwords, no needless system detail. |
-| 120 | A mechanism exists to actually analyze the logs. |
-| 121 | Log input validation failures. |
-| 122 | Log authentication attempts, especially failures. |
-| 123 | Log access-control failures. |
-| 124 | Log apparent tampering, including unexpected state-data changes. |
-| 125 | Log attempts using invalid or expired session tokens. |
-| 126 | Log system exceptions. |
-| 127 | Log administrative functions, including security-configuration changes. |
-| 128 | Log backend TLS connection failures. |
-| 129 | Log cryptographic module failures. |
-| 130 | Hash log entries to validate their integrity. |
+| 1 | Keep credentials, keys, and tokens out of source control, container images, and logs. |
+| 2 | Load secrets from a secrets manager or the environment at run time. |
+| 3 | Scan every commit for a secret. Block the push when one appears. |
+| 4 | Treat a leaked secret as used. Rotate it and check what it touched. |
+| 5 | Scope each credential to one service and one job. Prefer short-lived tokens. |
 
-### Data Protection
+### §2h Error handling and logging (ASVS V16)
 
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 131 | Least privilege: only the functionality, data and system information the task requires. |
-| 132 | Protect cached and temporary copies of sensitive data on the server; purge them as soon as they're not needed. |
-| 133 | Encrypt highly sensitive stored data — authentication verification data included — even server-side. |
-| 134 | Prevent server-side source code from being downloaded. |
-| 135 | Never store passwords, connection strings or other secrets client-side in clear text or any non-cryptographic form. Viewstate, Flash and compiled code are not hiding places. |
-| 136 | Strip comments from user-accessible production code — they leak backend detail. |
-| 137 | Remove unnecessary application and system documentation from what ships. |
-| 138 | No sensitive information in GET parameters. |
-| 139 | Disable autocomplete on forms carrying sensitive data, authentication included. |
-| 140 | Disable client caching on sensitive pages: `Cache-Control: no-store`, optionally with `Pragma: no-cache` for HTTP/1.0. |
-| 141 | Support removal of sensitive data once it's no longer required. |
-| 142 | Access-control sensitive server-side data — cached data and temporary files included. |
+| 1 | Handle every error path on purpose. An unhandled exception is now A10:2025. |
+| 2 | Fail closed. When a check cannot complete, deny the action. |
+| 3 | Plain message to the user. Stack trace, query, and internal path stay in the server log. |
+| 4 | Log identity, action, target, source, result, and time. |
+| 5 | Never log a password, token, key, full card number, or personal data the incident does not need. |
+| 6 | Log every authentication event, authorization failure, administrative action, and permission change. |
+| 7 | Protect the log. A log an attacker can edit is not evidence. |
+| 8 | Encode data entering a log, so nobody can forge a line or inject into the log viewer. |
 
-### Communication Security
+### §2i Data protection, retention, and privacy (ASVS V14)
 
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 143 | Encrypt transmission of all sensitive information — TLS for the connection, optionally discrete encryption on top. |
-| 144 | Certificates valid, correct domain, unexpired, intermediates installed. |
-| 145 | A failed TLS connection never falls back to plaintext. |
-| 146 | TLS for all authenticated content and all other sensitive information. |
-| 147 | TLS to external systems handling sensitive data or functions. |
-| 148 | One standard TLS implementation, configured once, configured right. |
-| 149 | Specify character encoding on every connection. |
-| 150 | Strip sensitive parameters from the `Referer` when linking off-site. |
+| 1 | Classify the data first. The class decides every control below it. |
+| 2 | Collect only the fields the feature needs. Record why you hold each one. |
+| 3 | Use data only for the purpose you collected it for. A new purpose needs a new decision. |
+| 4 | Set a retention period per class. Delete on that schedule, not only on request. |
+| 5 | Delete across every copy: database, backup, log, cache, search index, analytics, vendor. |
+| 6 | Mask or truncate sensitive data on display, in exports, and in support tools. |
+| 7 | Keep sensitive data out of URLs, hidden form fields, and client-side stores. |
+| 8 | Send `Cache-Control: no-store` on responses carrying sensitive data. |
+| 9 | Wipe temporary files, cache entries, and backups under the same rules as the original. |
+| 10 | Sanitize storage media before reuse, return, or disposal. |
 
-### System Configuration
+Rows 2 to 5 come from GDPR Article 5(1): purpose limitation, data minimization, storage
+limitation. The law covers personal data. The practice is correct for every class.
+**Data you deleted cannot leak** — retention is the cheapest breach-impact reduction available.
 
-| # | Practice |
+### §2j Communication (ASVS V12)
+
+| # | Control |
 | --- | --- |
-| 151 | Servers, frameworks and components on the latest approved version. |
-| 152 | All patches applied for the version in use. |
-| 153 | Directory listings off. |
-| 154 | Web server, process and service accounts at least privilege. |
-| 155 | Fail securely on exception. |
-| 156 | Remove unnecessary functionality and files. |
-| 157 | Remove test code and anything not intended for production before deploy. |
-| 158 | Don't leak the directory structure through `robots.txt` — put non-public directories under one isolated parent and `Disallow` the parent, not each child. |
-| 159 | Define which HTTP methods the application supports, and whether handling differs per page. |
-| 160 | Disable unnecessary methods (WebDAV extensions and similar). If a file-handling method is required, put a well-vetted authentication mechanism in front of it. |
-| 161 | If the server handles both HTTP 1.0 and 1.1, configure them alike or understand every difference (extended-method handling especially). |
-| 162 | Strip OS, server-version and framework detail from response headers. |
-| 163 | The security-configuration store can be output human-readable, for auditing. |
-| 164 | Register system components and software in an asset management system. |
-| 165 | Isolate development environments from the production network; access for authorized dev/test groups only. Dev is configured less securely and is used as the way in. |
-| 166 | A change-control system records code changes in both development and production. |
+| 1 | TLS on every connection, including inside the network. Redirect plain HTTP to HTTPS. |
+| 2 | TLS 1.2 or later with modern cipher suites. Turn off old protocol versions. |
+| 3 | Validate the certificate chain and host name. Never disable that check to make a test pass. |
+| 4 | Send `Strict-Transport-Security` with a long lifetime. |
+| 5 | Restrict cross-origin access with an explicit allowlist. Never reflect the request origin. |
 
-### Database Security
+### §2k Configuration and hardening (ASVS V13)
 
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 167 | Strongly typed parameterized queries. |
-| 168 | Input validation and output encoding, meta characters included; on failure, do not run the command. |
-| 169 | Variables strongly typed. |
-| 170 | Lowest possible privilege for database access. |
-| 171 | Secure credentials for database access. |
-| 172 | Connection strings never hard-coded — separate config file, on a trusted system, encrypted. |
-| 173 | Stored procedures abstract data access, so permissions on base tables can be removed. |
-| 174 | Close the connection as early as possible. |
-| 175 | Change or remove every default DBA password; strong passphrases or multi-factor. |
-| 176 | Turn off unnecessary database functionality — surface-area reduction; install only the required features. |
-| 177 | Remove default vendor content (sample schemas). |
-| 178 | Disable default accounts not needed by the business. |
-| 179 | Different credentials per trust distinction — user, read-only user, guest, administrator. |
+| 1 | Remove sample code, test accounts, debug endpoints, and unused features before release. |
+| 2 | Turn off directory listing and detailed error output in production. |
+| 3 | Run each service with the lowest operating-system rights it needs. |
+| 4 | Keep the platform, runtime, and container base image patched. |
+| 5 | Separate environments. A production secret never appears in development or a test fixture. |
+| 6 | Keep configuration in version control. Review a change to it like a change to code. |
 
-### File Management
+### §2l Files and resources (ASVS V5)
 
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 180 | Never pass user data straight into a dynamic include. |
-| 181 | Require authentication before upload. |
-| 182 | Limit uploadable types to those with a business purpose. |
-| 183 | Verify type by **file header**, not extension. |
-| 184 | Don't store uploads in the application's web context — content server or database instead. |
-| 185 | Prevent or restrict upload of anything the web server might interpret. |
-| 186 | Execution privileges off on upload directories. |
-| 187 | On UNIX, mount the upload target as a logical drive or use a chrooted environment. |
-| 188 | Reference existing files through a whitelist of names and types; a non-matching parameter is rejected or falls back to a hard-coded default. |
-| 189 | Never pass user data into a dynamic redirect. If unavoidable, accept only validated relative paths. |
-| 190 | Never pass directory or file paths — use index values mapped to a predefined list. |
-| 191 | Never send an absolute file path to the client. |
-| 192 | Application files and resources are read-only. |
-| 193 | Scan uploads for viruses and malware. |
+| 1 | Validate file type by content, not extension. Store uploads outside the web root. |
+| 2 | Generate a new file name on the server. Never build a path from user input. |
+| 3 | Cap file size, request size, and upload count. |
+| 4 | Scan an uploaded file before any other system reads it. |
+| 5 | Serve downloads with an explicit content type and a `Content-Disposition` header. |
+| 6 | Close every file, socket, and connection on every path, including the error path. |
+| 7 | In an unmanaged language, check every buffer boundary and allocation. Prefer safe functions and types. |
 
-### Memory Management
+### §2m Requests to other systems
 
-Unmanaged-language territory. In a managed runtime most of this is the runtime's job —
-206, 199 and 194 still apply.
-
-| # | Practice |
+| # | Control |
 | --- | --- |
-| 194 | Input and output control on untrusted data. |
-| 195 | Double-check the buffer really is the size claimed. |
-| 196 | With byte-count copies like `strncpy()`: if destination size equals source size, the result may not be NULL-terminated. |
-| 197 | Check buffer boundaries when the call is in a loop — no writing past the allocation. |
-| 198 | Truncate input strings to a sane length before any copy or concatenate. |
-| 199 | Close resources explicitly — connections, file handles. Don't wait for the collector. |
-| 200 | Non-executable stacks where available. |
-| 201 | Avoid known-vulnerable functions (`printf`, `strcat`, `strcpy`, …). |
-| 202 | Free allocated memory on function completion **and at every exit point**. |
-
-### General Coding Practices
-
-| # | Practice |
-| --- | --- |
-| 202 | Prefer tested, approved managed code over new unmanaged code for common tasks. *(Source reuses 202 here.)* |
-| 203 | Use task-specific built-in APIs for OS tasks. The application never issues commands to the OS directly, least of all through a shell. |
-| 204 | Checksums or hashes to verify integrity of interpreted code, libraries, executables and config files. |
-| 205 | Locking or a synchronization mechanism against simultaneous requests and race conditions. |
-| 206 | Protect shared variables and resources from concurrent access. |
-| 207 | Initialize every variable and data store explicitly — at declaration or immediately before first use. |
-| 208 | When elevated privileges are required, raise as late as possible and drop as soon as possible. |
-| 209 | Know the language's numeric representation: byte-size mismatches, precision, signed/unsigned, truncation, casting, NaN, and over/underflow. |
-| 210 | Never pass user data to a dynamic execution function. |
-| 211 | Users cannot generate new code or alter existing code. |
-| 212 | Review secondary applications, third-party code and libraries for business necessity and safe behaviour — each one is new attack surface. |
-| 213 | Safe updating: sign code cryptographically, have the client verify the signature, and transfer over an encrypted channel. |
+| 1 | Never fetch a user-supplied URL without a host and scheme allowlist. This is SSRF, now inside A01:2025. |
+| 2 | Block internal address ranges, loopback, and the cloud metadata endpoint. |
+| 3 | Do not follow a redirect into a host the allowlist does not name. |
+| 4 | Set a timeout, size cap, and retry limit on every outbound call. |
+| 5 | Authenticate service to service. A request from inside the network proves nothing. |
 
 ---
 
-## §3 Secure SDLC & production practices
+## §3 OWASP Top 10:2025
 
-How §1 and §2 get enforced mechanically — the pipeline and runtime habits that turn a
-principle into something that actually happens on every change.
+Ranked from about 2.8 million applications and about 589 weakness types. Eight categories come
+from data, two from a community survey. Announced November 2025, finalized 2026. Use these
+names in review comments and issue titles — a shared name makes a bug class searchable.
 
-| # | Practice | What it demands |
+| # | Risk | What it is | Fix lives in |
+| --- | --- | --- | --- |
+| A01 | **Broken access control** | A user reaches data or an action outside their permission. SSRF now sits here. | §2e, §2m, §1a.3, §1a.6 |
+| A02 | **Security misconfiguration** | A default account, open bucket, debug endpoint, verbose error, or unpatched feature stays enabled. | §2k, §1b.2, §1b.5 |
+| A03 | **Software supply chain failures** | A dependency, build tool, plugin, or pipeline step brings in unvetted code. New in 2025, wider than the old "vulnerable components". | §5 |
+| A04 | **Cryptographic failures** | Sensitive data leaks unencrypted, weakly encrypted, or in the clear. | §2f, §2i, §2j |
+| A05 | **Injection** | Untrusted input runs as code or query. SQL, NoSQL, command, LDAP, and XSS. | §2a, §2b |
+| A06 | **Insecure design** | The flaw is in the design. Correct code cannot repair a missing control. | §1, threat modeling in §5c.1 |
+| A07 | **Authentication failures** | Credential stuffing, weak or default passwords, broken sessions, missing MFA. | §2c, §2d |
+| A08 | **Software or data integrity failures** | Code or data trusted with no check of origin. Unsafe deserialization, unsigned updates. | §5, §2a.7 |
+| A09 | **Security logging and alerting failures** | An attack succeeds unseen. The 2025 rename puts the weight on the alert. | §2h, §6 |
+| A10 | **Mishandling of exceptional conditions** | The error path swallows the failure, fails open, or leaks internal detail. New in 2025. | §2h, §1a.2 |
+
+**Companion list:** the 2025 CWE Top 25 ranks the individual weaknesses behind these
+categories, from 39,080 CVE records. XSS (CWE-79) first, SQL injection (CWE-89) second, CSRF
+(CWE-352) third. OWASP steers design. CWE steers testing.
+
+---
+
+## §4 OWASP Top 10 for LLM applications (2025)
+
+A separate threat model, not a subset of §3. A model reads instructions and data on the same
+channel, so the old boundary between code and input does not exist. Read this for any feature
+that sends a prompt, gives a model a tool, or puts model output into another system.
+
+| # | Risk | What it is | What prevents it |
+| --- | --- | --- | --- |
+| LLM01 | **Prompt injection** | Text in a document, page, email, or tool result instructs the model, and it obeys. Direct comes from the user, indirect from content the model reads. | Treat every tool result and retrieved document as data, never instruction. Ask a human before any side effect. |
+| LLM02 | **Sensitive information disclosure** | The model reveals a secret, personal data, or proprietary content from context, training, or the index. | Keep secrets out of context. Give a scoped credential, not a raw key. Filter output as well as input. |
+| LLM03 | **Supply chain** | A poisoned model file, adapter, plugin, or tool server enters the stack. Some model formats run code on load. | §5 applies to models and tools, not only packages. Pin the source. Prefer a safe serialization format. |
+| LLM04 | **Data and model poisoning** | Crafted data planted in training, fine-tuning, or a retrieval corpus changes behavior later. | Control who can write to a corpus. Track lineage. Test against a held-out behavior set after every update. |
+| LLM05 | **Improper output handling** | Model output reaches a shell, query, browser, or file path unvalidated. The model becomes the injection vector. | Validate model output at the consumer like untrusted user input. Encode for the destination, per §2b. |
+| LLM06 | **Excessive agency** | The model holds more tools, permission, or autonomy than the task needs. | Least privilege for tools. Narrowest tool, narrowest scope. Human approval for anything irreversible. |
+| LLM07 | **System prompt leakage** | Somebody extracts the system prompt, and it held a credential or a rule the design depended on. | Never put a secret or authorization rule in a prompt. Enforce in code — open design (§1a.4) applies to prompts. |
+| LLM08 | **Vector and embedding weaknesses** | Retrieval leaks across tenants, or embeds hostile content that steers the model later. | Partition the index per tenant. Same access control on retrieval as on the source. Sanitize on ingest. |
+| LLM09 | **Misinformation** | The model states something false with confidence, and a person or system acts on it. | Cite the source. Verify a factual claim before it triggers an action. Show what the model is unsure about. |
+| LLM10 | **Unbounded consumption** | Uncontrolled inference cost, token use, or a recursive agent loop drains budget and service. | Cap tokens, tool calls, loop depth, and spend per session. Alert on the cost curve. |
+
+NIST SP 800-218A extends §5 to generative AI and dual-use foundation models. Same four practice
+groups, plus tasks for training data, model artifacts, lineage, and post-release monitoring.
+
+---
+
+## §5 Supply chain & secure SDLC
+
+Supply chain failures entered the OWASP Top 10 at A03 in 2025. This section is the answer.
+
+### §5a Framework — NIST SP 800-218 (SSDF)
+
+| Group | Name | Covers |
 | --- | --- | --- |
-| 1 | **Shift-left scanning** | Run SAST (static analysis) in CI on every commit; run DAST (dynamic/runtime attack simulation) against staging before release. Catch what code review misses. |
-| 2 | **Dependency hygiene** | Vet and pin third-party packages; scan for known CVEs in the pipeline, not after an incident. |
-| 3 | **Secrets management** | Credentials and keys live in a secrets manager, are rotated regularly, and are never in source control or logs. |
-| 4 | **Encryption everywhere** | Encrypt sensitive data at rest and in transit by default — not opt-in per feature. |
-| 5 | **Rate limiting & throttling** | Bound abuse and cost at the API boundary; degrade gracefully rather than falling over under load or attack. |
-| 6 | **Input validation at the boundary** | Fail fast on malformed, oversized, or malicious input before it reaches business logic. |
-| 7 | **Structured, PII-safe logging** | Log enough to reconstruct an incident (correlation IDs, timestamps, actor) without ever logging secrets or personal data. |
-| 8 | **Audit trails** | Record who did what, when, for every administrative action and every access to sensitive data. |
-| 9 | **Phased rollout** | Ship behind canaries or feature flags with real monitoring, so a bad change is caught at 1% of traffic, not 100%. |
-| 10 | **Tested rollback** | A rollback path must be exercised before it's needed — an untested rollback is not a real mitigation. |
+| **PO** | Prepare the organization | People, roles, tooling, and security requirements for every product. |
+| **PS** | Protect the software | Protect code, build, and release from tampering. Keep reproducible artifacts. |
+| **PW** | Produce well-secured software | Design review, threat modeling, secure coding, code review, testing. |
+| **RV** | Respond to vulnerabilities | Find, fix, disclose. Then fix the root cause so the class does not return. |
+
+### §5b Dependencies and provenance
+
+| # | Practice | Demands |
+| --- | --- | --- |
+| 1 | **Know what you ship** | Inventory every direct and transitive dependency. Generate an SBOM per release, so "are we affected" takes minutes. |
+| 2 | **Pin what you build** | Commit the lockfile. Pin by digest where the registry supports it. Never resolve a floating version at deploy time. |
+| 3 | **Check the name** | Read the package name character by character. A typosquat, a scope swap, and an AI-invented package name all install without complaint. |
+| 4 | **Judge the source** | Prefer a public repository, a recent release, a named maintainer, and a reproducible build. |
+| 5 | **Limit install-time code** | A package install runs code. Turn off post-install scripts by default. Install from the lockfile in the pipeline. |
+| 6 | **Scan continuously** | Composition analysis on every build, and again on a schedule. A new advisory can land against unchanged code. |
+| 7 | **Sign and verify** | Sign what you publish. Verify the signature of what you consume. |
+| 8 | **Track provenance** | SLSA build levels: L1 produces provenance, L2 has the platform sign it, L3 hardens against tampering between builds. Aim for L2 or higher. |
+
+### §5c Checks in the pipeline
+
+| # | Practice | Demands |
+| --- | --- | --- |
+| 1 | **Threat model the change** | Before a feature touching authentication, money, or personal data, write down who attacks it and how. |
+| 2 | **Static analysis** | SAST on every commit. Fail the build on a high-severity finding. |
+| 3 | **Secret scanning** | Block a commit carrying a credential. Scan history too. |
+| 4 | **Dynamic testing** | DAST against a running staging build before release. |
+| 5 | **Security unit tests** | A test per fixed vulnerability, so the bug cannot return in silence. |
+| 6 | **Review with a security eye** | A change to authentication, authorization, cryptography, or a dependency needs a second reader who knows §2. |
+| 7 | **Reproducible builds** | Build from a clean, versioned environment. A build that works on one machine cannot be audited. |
+| 8 | **Separate build and deploy rights** | The account that builds must not be the account that approves the release. |
 
 ---
 
-## §4 When principles conflict
+## §6 Run, detect, and respond
+
+| # | Practice | Demands |
+| --- | --- | --- |
+| 1 | **Alert, not only log** | Alert on an authentication spike, an authorization failure burst, a new admin account, an unexpected outbound connection. |
+| 2 | **Audit trail** | Who did what and when, for every administrative action and every access to sensitive data. |
+| 3 | **Rate limiting and quotas** | Bound abuse and cost at the boundary. Degrade on purpose instead of falling over. |
+| 4 | **Patch on a clock** | Fix deadlines by severity, exceptions tracked. A known-exploited weakness is an incident, not a ticket. |
+| 5 | **Rotate credentials** | On a schedule, and immediately after a person leaves or a secret leaks. |
+| 6 | **Test the backup** | A restore nobody has run is not a backup. Keep one copy offline. |
+| 7 | **Phased rollout** | Flag or canary with monitoring, so a bad change is caught at 1% of traffic. |
+| 8 | **Tested rollback** | Exercise it before you need it. An untested rollback is not a mitigation. |
+| 9 | **Incident response plan** | Who declares, who talks to customers, how evidence is kept. Rehearse it. |
+| 10 | **Blameless review** | Ask what made the mistake possible, fix that, publish what changed. |
+| 11 | **Vulnerability disclosure** | Publish a way for an outsider to report a flaw, and answer it. A researcher with no channel goes public. |
+
+---
+
+## §7 When principles conflict
 
 | Conflict | Ruling |
 | --- | --- |
-| Least privilege (§1.3) wants narrow access; usability (§2.13) wants low friction | **Narrow the grant, not the friction.** Make the *right* access effortless; never widen access to avoid a prompt. |
-| Defense in depth (§2.4) wants more layers; economy of mechanism (§2.9) wants the simplest design | **Layer at the boundary, simplify behind it.** Add checks where trust changes (edge, auth), not inside every internal call. |
-| Complete mediation (§1.6) wants a check on every request; performance wants caching | **Cache the data, not the decision.** Cache what a permission check reads; never cache the yes/no result past the request that asked it. |
-| Fail securely (§1.7) wants to deny on error; availability wants the system to stay up | **Deny the request, not the service.** A failed auth check rejects that one action — it must not take the whole system down. |
-| Secure defaults (§1.2) want the safest config; open design (§2.11) says don't rely on secrecy | **Not a real conflict — secure defaults are about behavior, not hidden implementation.** Ship the safe default *and* publish how it works. |
-| Minimize attack surface (§1.5) wants fewer features; a real user need wants the feature | **Ship it deliberately, not by omission.** Build it, and delete what it replaces — attack surface grows from what's forgotten, not from what's used. |
+| Least privilege (§1a.6) wants a narrow grant. Psychological acceptability (§1a.8) wants low friction. | **Narrow the grant, not the friction.** Make correct access easy to obtain. Never widen access to remove a prompt. |
+| Defense in depth (§1b.4) wants more layers. Economy of mechanism (§1a.1) wants the simplest design. | **Layer at the boundary, simplify behind it.** Check where trust changes, not inside every internal call. |
+| Complete mediation (§1a.3) wants a check per request. Performance wants a cache. | **Cache the data, not the decision.** Never cache the answer past the request that asked. |
+| Fail-safe defaults (§1a.2) want denial on error. Availability wants the service up. | **Deny the request, not the service.** A failed check rejects one action. |
+| A minimal attack surface (§1b.5) wants fewer features. A real user need wants the feature. | **Ship it on purpose, delete what it replaces.** Attack surface grows from what people forget. |
+| An LLM feature needs broad tool access (§4 LLM06). Least privilege wants a narrow grant. | **Narrow the tool, widen the prompt.** One specific tool with a bounded scope, not a general tool and a warning. |
+| A prompt guardrail is quick to write. Open design (§1a.4) says secrecy is not a control. | **Enforce in code, remind in the prompt.** A rule living only in a prompt is bypassed by LLM01 and leaked by LLM07. |
+| A fix needs a major version bump. Stability wants the pinned version. | **Take the fix now, stage the churn.** Ship a branch carrying only the security fix. |
+| Detection (§3 A09) wants detail in the log. Privacy (§2h.5) wants less. | **Log the actor and the action, never the payload.** An identifier and a timestamp rebuild an incident. |
+| Transparency (§1b.12) wants the advisory published. Caution says it helps an attacker. | **Publish after the fix is available, and publish anyway.** Silence protects nobody but the vendor. |
+| A short deadline wants the merge. Security review (§5c.6) wants a second reader. | **The review is the feature.** A change to authentication, authorization, or cryptography waits for a reader. |
 
-**Tiebreaker in every case:** favour whichever reading still holds when the system is under
-active attack, not just under normal use. A control that only works when nobody is trying to
-break it isn't a control.
+**Tiebreaker:** take the reading that still holds while somebody attacks the system, not only
+while everybody uses it correctly. A control that works only when nobody tries to break it is
+not a control.
 
 ---
 
-## How to use this document
+## How to use
 
-1. Find the principles a change touches. Check **every section** — a change can satisfy
-   §1's design-time principles and still violate an SDLC practice in §3 (e.g. a least-privilege
-   API with no dependency scanning behind it). §1/§2 are judgment; **§2a is the line-level
-   checklist** — go there when reviewing actual code, and mark a category *not applicable*
-   rather than *passed* when the project has no such surface.
-2. This file is pure reference — *what the principles are*, nothing about how any one project
-   already satisfies them. Concrete, enforceable rules and current posture for a specific
-   codebase belong in that project's own security doc (e.g. `SECURITY.md`); history of what
-   changed and why belongs in its changelog. Keep those two out of this file, or every future
-   read pays for content the review doesn't need.
-3. When a principle conflicts with velocity, convenience, or cost, favour the principle — §4
-   gives the ruling for the recurring conflicts; extend the table when a new one repeats.
-4. This file is a checklist for *judgment*, not a compliance certificate. Passing every row
-   does not mean a system is secure — §2.3 (No Security Guarantee) applies to this document too.
+1. Check every section. A least-privilege API with no dependency scanning still fails §5.
+2. §1 is judgment. **§2 is the line-level checklist.** §3 and §4 are the failure vocabulary.
+3. If a model reads untrusted content or holds a tool, §4 is not optional. §2 and §3 do not cover it.
+4. §7 rules a recurring conflict. Extend it when a new one returns.
+5. Passing every row does not make a system secure. **No security guarantee** (§1b.11) applies
+   to this document too.
+
+**Other lenses.** Engineering asks whether it can be changed safely. UI/UX asks whether a person
+can use it. A control nobody can operate fails in production — read §1a.8 beside the UI/UX Rulebook, section 1.5 and section 7d.
+
+---
+
+## Sources
+
+| § | Source |
+| --- | --- |
+| Goals | ISO/IEC 25010:2023, security characteristic |
+| §1a | Saltzer and Schroeder, *The Protection of Information in Computer Systems*, 1975 |
+| §1b | [CISA secure by design](https://www.cisa.gov/resources-tools/resources/secure-by-design) (2023, updated 2024), NIST SP 800-207 (zero trust) |
+| §2 | [OWASP ASVS 5.0](https://github.com/OWASP/ASVS) (May 2025), [OWASP Cheat Sheets](https://cheatsheetseries.owasp.org/), [Proactive Controls v4](https://top10proactive.owasp.org/) |
+| §2c | [NIST SP 800-63B-4](https://pages.nist.gov/800-63-4/sp800-63b.html), [OWASP Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html) |
+| §2i | [GDPR Article 5](https://gdpr-info.eu/art-5-gdpr/), [NIST SP 800-88 Rev. 1](https://csrc.nist.gov/pubs/sp/800/88/r1/final) |
+| §3 | [OWASP Top 10:2025](https://owasp.org/Top10/2025/), [2025 CWE Top 25](https://cwe.mitre.org/top25/archive/2025/2025_cwe_top25.html) |
+| §4 | [OWASP Top 10 for LLM Applications 2025](https://owasp.org/www-project-top-10-for-large-language-model-applications/), NIST SP 800-218A |
+| §5 | [NIST SP 800-218 SSDF](https://csrc.nist.gov/projects/ssdf), [SLSA](https://slsa.dev/) |
+| §6 | CISA Known Exploited Vulnerabilities catalog, ISO/IEC 29147 (vulnerability disclosure) |
