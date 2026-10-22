@@ -58,6 +58,7 @@
 
 ## RPG
 - The Witcher 3: Wild Hunt
+- Monster Hunter: World (+ Iceborne)
 
 ## Simulation (other)
 - Hitman
